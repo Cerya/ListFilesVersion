@@ -5,10 +5,10 @@
 #pragma comment(lib, "Version.lib")
 
 BOOL GetFileVersion(char *LibName, 
-					DWORD *MajVersion, 
-					DWORD *MinVersion, 
-					DWORD *BuildNumber, 
-					DWORD *RevisionNumber);
+	DWORD *MajVersion, 
+	DWORD *MinVersion, 
+	DWORD *BuildNumber, 
+	DWORD *RevisionNumber);
 
 void DisplayErrorBox(LPTSTR lpszFunction);
 
