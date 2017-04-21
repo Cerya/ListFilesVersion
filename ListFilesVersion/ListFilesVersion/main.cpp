@@ -2,52 +2,20 @@
 #include <tchar.h> 
 #include <stdio.h>
 #include <strsafe.h>
-
 #pragma comment(lib, "Version.lib")
+
+BOOL GetFileVersion(char *LibName, 
+					DWORD *MajVersion, 
+					DWORD *MinVersion, 
+					DWORD *BuildNumber, 
+					DWORD *RevisionNumber);
 
 void DisplayErrorBox(LPTSTR lpszFunction);
 
-
-
-BOOL GetFileVersion(char *LibName, DWORD *MajVersion, DWORD *MinVersion, DWORD *BuildNumber, DWORD *RevisionNumber)
-{
-	DWORD dwHandle, dwLen;
-	UINT BufLen;
-	LPTSTR lpData;
-	VS_FIXEDFILEINFO *pFileInfo;
-
-	dwLen = GetFileVersionInfoSize(LPWSTR(LibName), &dwHandle);
-	if (!dwLen)
-		return FALSE;
-
-	lpData = (LPTSTR)malloc(dwLen);
-	if (!lpData)
-		return FALSE;
-
-	if (!GetFileVersionInfo(LPWSTR(LibName), dwHandle, dwLen, lpData))
-	{
-		free(lpData);
-		return FALSE;
-	}
-	if (VerQueryValue(lpData, _T("\\"), (LPVOID *)&pFileInfo, (PUINT)&BufLen))
-	{
-		//FIX ME
-		DWORD MajVersion = HIWORD(pFileInfo->dwFileVersionMS);
-		DWORD MinVersion = LOWORD(pFileInfo->dwFileVersionMS);
-		DWORD BuildNumber = HIWORD(pFileInfo->dwFileVersionLS);
-		DWORD RevisionNumber = LOWORD(pFileInfo->dwFileVersionLS);
-		free(lpData);
-
-		//output Filename and Version
-		_tprintf(TEXT("Filename:    %s\n"), LPWSTR(LibName));
-		_tprintf(TEXT("Version:     %d.%d.%d.%d\n\n"), MajVersion, MinVersion,
-			BuildNumber, RevisionNumber);
-
-		return TRUE;
-	}
-	free(lpData);
-	return false;
-}
+/*
+	Usage  : ListFileVersionCheck.exe C:\Windows\System32
+	return : Filename & Version
+*/
 
 int _tmain(int argc, TCHAR *argv[])
 {
@@ -60,7 +28,6 @@ int _tmain(int argc, TCHAR *argv[])
 	DWORD major, minor, build, revision;
 
 	// Check argument else print usage.
-
 	if (argc != 2)
 	{
 		_tprintf(TEXT("\nUsage: %s <PATH>\n"), argv[0]);
@@ -95,9 +62,8 @@ int _tmain(int argc, TCHAR *argv[])
 		DisplayErrorBox(TEXT("FindFirstFile"));
 		return dwError;
 	}
-
+	
 	// List all the files in the directory with some info about them.
-
 	do
 	{
 		if (wData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
@@ -117,17 +83,50 @@ int _tmain(int argc, TCHAR *argv[])
 	{
 		DisplayErrorBox(TEXT("FindFirstFile"));
 	}
-
 	FindClose(hFind);
 	return dwError;
 }
 
+BOOL GetFileVersion(char *LibName, DWORD *MajVersion, DWORD *MinVersion, DWORD *BuildNumber, DWORD *RevisionNumber)
+{
+	DWORD dwHandle, dwLen;
+	UINT BufLen;
+	LPTSTR lpData;
+	VS_FIXEDFILEINFO *pFileInfo;
+	dwLen = GetFileVersionInfoSize(LPWSTR(LibName), &dwHandle);
 
+	if (!dwLen) return FALSE;
+
+	lpData = (LPTSTR)malloc(dwLen);
+	if (!lpData) return FALSE;
+
+	if (!GetFileVersionInfo(LPWSTR(LibName), dwHandle, dwLen, lpData))
+	{
+		free(lpData);
+		return FALSE;
+	}
+	if (VerQueryValue(lpData, _T("\\"), (LPVOID *)&pFileInfo, (PUINT)&BufLen))
+	{
+		//FIX ME
+		DWORD MajVersion = HIWORD(pFileInfo->dwFileVersionMS);
+		DWORD MinVersion = LOWORD(pFileInfo->dwFileVersionMS);
+		DWORD BuildNumber = HIWORD(pFileInfo->dwFileVersionLS);
+		DWORD RevisionNumber = LOWORD(pFileInfo->dwFileVersionLS);
+		free(lpData);
+		//output Filename and Version
+		_tprintf(TEXT("Filename:    %s\n"), LPWSTR(LibName));
+		_tprintf(TEXT("Version:     %d.%d.%d.%d\n\n"), MajVersion, MinVersion,
+			BuildNumber, RevisionNumber);
+
+		return TRUE;
+	}
+	free(lpData);
+	return false;
+}
 
 void DisplayErrorBox(LPTSTR lpszFunction)
 {
 	// Retrieve the system error message for the last-error code
-
 	LPVOID lpMsgBuf;
 	LPVOID lpDisplayBuf;
 	DWORD dw = GetLastError();
@@ -143,7 +142,6 @@ void DisplayErrorBox(LPTSTR lpszFunction)
 		0, NULL);
 
 	// Display the error message and clean up
-
 	lpDisplayBuf = (LPVOID)LocalAlloc(LMEM_ZEROINIT,
 		(lstrlen((LPCTSTR)lpMsgBuf) + lstrlen((LPCTSTR)lpszFunction) + 40)*sizeof(TCHAR));
 	StringCchPrintf((LPTSTR)lpDisplayBuf,
